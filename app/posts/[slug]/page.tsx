@@ -104,18 +104,27 @@ const components = {
       {children}
     </code>
   ),
-  img: ({ alt = '', src, ...props }: React.ImgHTMLAttributes<HTMLImageElement>) => {
-    if (!src) return null
+  img: ({
+    alt = '',
+    src,
+    width = 800,
+    height = 400,
+    ...props
+  }: Omit<React.ImgHTMLAttributes<HTMLImageElement>, 'width' | 'height'> & {
+    width?: number | `${number}`;
+    height?: number | `${number}`;
+  }) => {
+    if (!src) return null;
     return (
-      <Image 
-        className="w-full h-auto rounded-lg shadow-md my-6" 
-        width={800} 
-        height={400} 
+      <Image
+        className="w-full h-auto rounded-lg shadow-md my-6"
+        width={width}
+        height={height}
         src={src}
-        alt={alt} 
+        alt={alt}
         {...props}
       />
-    )
+    );
   },
 }
 
