@@ -78,7 +78,7 @@ function validateAndNormalizeFrontmatter(data: any, slug: string): PostMatter {
     data.tags = []
   } else {
     // Ensure all tags are strings and filter out invalid ones
-    data.tags = data.tags.filter(tag => typeof tag === 'string' && tag.trim().length > 0)
+    data.tags = data.tags.filter((tag: any) => typeof tag === 'string' && tag.trim().length > 0)
   }
   
   if (errors.length > 0) {
