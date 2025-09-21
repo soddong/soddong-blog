@@ -12,11 +12,10 @@ export default async function Home() {
       {/* Hero Section */}
       <section className="text-center py-12">
         <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-gray-100 mb-6">
-          Welcome to Soddong
+         DEV BLOG
         </h1>
         <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto mb-8">
-          Sharing my journey in development, documenting technical learning, and showcasing projects. 
-          Join me as I explore new technologies and build cool things.
+          호적상 3년차, 실력상 1년차 백엔드 개발자 일지
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link

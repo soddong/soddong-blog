@@ -13,12 +13,12 @@ export default function About() {
           About Me
         </h1>
         <p className="text-xl text-gray-600 dark:text-gray-400">
-          Hi! I&apos;m a developer passionate about learning and sharing knowledge through code.
+        나는 바보다, 고로 공부한다.
         </p>
       </div>
 
       <div className="prose prose-lg dark:prose-invert max-w-none">
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-8 shadow-sm border border-gray-200 dark:border-gray-700 mb-8">
+        {/* <div className="bg-white dark:bg-gray-800 rounded-lg p-8 shadow-sm border border-gray-200 dark:border-gray-700 mb-8">
           <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
             My Journey
           </h2>
@@ -36,34 +36,19 @@ export default function About() {
             When I&apos;m not coding, you can find me exploring new technologies, reading tech blogs,
             or working on side projects that push my skills in new directions.
           </p>
-        </div>
+        </div> */}
 
         <div className="bg-white dark:bg-gray-800 rounded-lg p-8 shadow-sm border border-gray-200 dark:border-gray-700 mb-8">
           <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
             What I Work With
           </h2>
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-2 gap-6 mt-4">
             <div>
               <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-3">
-                Frontend
+                Backend
               </h3>
               <div className="flex flex-wrap gap-2">
-                {['React', 'Next.js', 'TypeScript', 'Tailwind CSS', 'Vue.js'].map((tech) => (
-                  <span
-                    key={tech}
-                    className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full text-sm"
-                  >
-                    {tech}
-                  </span>
-                ))}
-              </div>
-            </div>
-            <div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-3">
-                Backend & Tools
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {['Node.js', 'Python', 'PostgreSQL', 'Docker', 'Git'].map((tech) => (
+                {['Java', 'Spring Boot', 'JPA', 'Python'].map((tech) => (
                   <span
                     key={tech}
                     className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-full text-sm"
@@ -73,7 +58,38 @@ export default function About() {
                 ))}
               </div>
             </div>
+            <div>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-3">
+                Infra
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {['AWS/GCP/OCI', 'OCP', 'Docker', 'Nginx'].map((tech) => (
+                  <span
+                    key={tech}
+                    className="px-3 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded-full text-sm"
+                  >
+                    {tech}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-3">
+                AI
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {['Python', 'LangChain', 'RAG'].map((tech) => (
+                  <span
+                    key={tech}
+                    className="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded-full text-sm"
+                  >
+                    {tech}
+                  </span>
+                ))}
+              </div>
+            </div>
           </div>
+          <br />
         </div>
 
         <div className="bg-white dark:bg-gray-800 rounded-lg p-8 shadow-sm border border-gray-200 dark:border-gray-700 mb-8">
@@ -113,7 +129,7 @@ export default function About() {
           </p>
           <div className="flex justify-center space-x-6">
             <a
-              href="https://github.com/yourusername"
+              href="https://github.com/soddong"
               className="flex items-center px-4 py-2 bg-gray-800 dark:bg-gray-700 text-white rounded-lg hover:bg-gray-900 dark:hover:bg-gray-600 transition-colors"
               target="_blank"
               rel="noopener noreferrer"
@@ -124,18 +140,7 @@ export default function About() {
               GitHub
             </a>
             <a
-              href="https://twitter.com/yourusername"
-              className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M6.29 18.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0020 3.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.073 4.073 0 01.8 7.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 010 16.407a11.616 11.616 0 006.29 1.84" />
-              </svg>
-              Twitter
-            </a>
-            <a
-              href="mailto:your.email@example.com"
+              href="gus9300@naver.com"
               className="flex items-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
             >
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

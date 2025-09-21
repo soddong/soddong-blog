@@ -21,20 +21,12 @@ const Footer = () => {
               About
             </Link>
             <a 
-              href="https://github.com/yourusername" 
+              href="https://github.com/soddong" 
               className="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
               target="_blank"
               rel="noopener noreferrer"
             >
               GitHub
-            </a>
-            <a 
-              href="https://twitter.com/yourusername" 
-              className="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Twitter
             </a>
           </div>
         </div>
