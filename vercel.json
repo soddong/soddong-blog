@@ -4,7 +4,7 @@
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "framework": "nextjs",
-  "regions": ["iad1", "sfo1"],
+  "regions": ["hnd1"],
   "functions": {
     "app/**/*.tsx": {
       "maxDuration": 30
