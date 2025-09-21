@@ -74,17 +74,17 @@ const components = {
       {children}
     </a>
   ),
-  ul: ({ children, ...props }: React.HTMLProps<HTMLUListElement>) => (
+  ul: ({ children, ...props }: React.DetailedHTMLProps<React.HTMLAttributes<HTMLUListElement>, HTMLUListElement>) => (
     <ul className="mb-4 ml-6 list-disc text-gray-700 dark:text-gray-300" {...props}>
       {children}
     </ul>
   ),
-  ol: ({ children, ...props }: React.HTMLProps<HTMLOListElement>) => (
-    <ol className="mb-4 ml-6 list-decimal text-gray-700 dark:text-gray-300" {...props}>
+  ol: ({ children, type, ...props }: React.DetailedHTMLProps<React.OlHTMLAttributes<HTMLOListElement>, HTMLOListElement>) => (
+    <ol className="mb-4 ml-6 list-decimal text-gray-700 dark:text-gray-300" type={type} {...props}>
       {children}
     </ol>
   ),
-  li: ({ children, ...props }: React.HTMLProps<HTMLLIElement>) => (
+  li: ({ children, ...props }: React.DetailedHTMLProps<React.LiHTMLAttributes<HTMLLIElement>, HTMLLIElement>) => (
     <li className="mb-1" {...props}>
       {children}
     </li>
