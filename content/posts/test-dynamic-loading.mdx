@@ -1,0 +1,32 @@
+---
+title: "Testing Dynamic Post Loading"
+description: "This post demonstrates that the system dynamically reads from the file system"
+date: "2025-09-21"
+tags: ["Testing", "Dynamic", "System"]
+author: "Soddong"
+draft: false
+featured: false
+---
+
+# Testing Dynamic Post Loading
+
+This post was created to demonstrate that the system automatically:
+
+1. ✅ Reads posts dynamically from the `/content/posts/` directory
+2. ✅ Uses `fs.readdirSync()` to scan for `.mdx` files
+3. ✅ Processes frontmatter with `gray-matter`
+4. ✅ Prevents broken links by checking file existence
+5. ✅ Updates the Home page without code changes
+
+## How It Works
+
+The system uses these key functions:
+
+- `getPostSlugs()` - Scans directory for `.mdx` files
+- `getAllPosts()` - Loads and processes all posts
+- `getFeaturedPosts()` - Filters featured posts for home page
+- `getPostBySlug()` - Loads individual posts safely
+
+## No Hardcoded Data
+
+Everything is loaded dynamically from the file system!
