@@ -1,0 +1,211 @@
+---
+title: "Spring Core 동작 이해하기"
+description: "스프링 프레임워크 Core(IoC/DI)를 구현해보면서 이해한 과정을 단계별로 정리한 것"
+date: "2025-09-27"
+tags: ["Spring"]
+author: "Soddong"
+draft: false
+featured: true
+---
+
+## Overview
+Spring Framework는 자바로 애플리케이션을 개발할 때 필요한 인프라를 전반적으로 제공해 주는 프레임워크다.   
+핵심에는 IoC(제어의 역전)와 DI(의존성 주입)이 있는데, 쉽게 말해 객체를 직접 만들고 연결하는 수고를 개발자 대신 컨테이너가 해준다.
+덕분에 객체 생성 같은 기술적인 부분보다 서비스 로직 자체에 더 집중할 수 있다.
+
+### Architecture (Module)
+![Spring Framework Overview](/images/spring-framework-runtime-overview.png)
+(출처: https://docs.spring.io/spring-framework/docs/4.0.x/spring-framework-reference/html/overview.html)
+
+| 계층                            | 모듈                  | 역할                                                   |
+| ----------------------------- | ------------------- | ---------------------------------------------------- |
+| **Core Container**            | **Core / Beans**    | 스프링의 뼈대. IoC/DI 핵심. 객체(Bean)를 만들고 연결해 준다.            |
+|                               | **Context**         | Core/Beans를 확장. `ApplicationContext`를 통해 스프링 기능에 접근. |
+|                               | **SpEL**            | 표현식 언어. 런타임에 객체 그래프를 조회·조작할 수 있게 해줌.                 |
+| **Data Access / Integration** | **JDBC**            | 반복되는 DB 접근 코드 단순화, 예외 처리 공통화.                        |
+|                               | **ORM**             | Hibernate, JPA 같은 ORM 프레임워크와 연결. 트랜잭션 관리 지원.         |
+|                               | **OXM**             | 객체 ↔ XML 변환을 쉽게 해줌.                                  |
+|                               | **JMS**             | 메시지 전송/수신 처리.                                        |
+|                               | **Transaction**     | 선언적 트랜잭션 관리 (코드 대신 설정/애노테이션으로 관리).                   |
+| **Web**                       | **Web**             | 웹앱 환경에서 IoC 컨테이너 초기화, 파일 업로드 지원.                     |
+|                               | **Web-Servlet**     | 스프링 MVC. 컨트롤러, 뷰, 모델을 분리해 깔끔한 웹 구조 제공.               |
+|                               | **Web-Portlet**     | 포틀릿 환경에서 MVC 제공 (웹-서블릿과 비슷).                         |
+|                               | **WebSocket**       | 실시간 양방향 통신(WebSocket) 지원.                            |
+| **AOP & Instrumentation**     | **AOP**             | 횡단 관심사(로그, 보안 등)를 모듈화. 비즈니스 로직과 분리.                  |
+|                               | **Aspects**         | AspectJ 연동으로 더 강력한 AOP 기능 제공.                        |
+|                               | **Instrumentation** | 클래스 로딩/바이트코드 조작 지원. 특정 WAS 통합용.                      |
+| **Test**                      | **Test**            | 단위 테스트 지원. JUnit/TestNG와 통합, 컨테이너 로딩/캐싱.             |
+
+각 모듈(4.0기준 20개)은 Core Container, Data Access/Integration, Web, AOP, Instrumentation, Test로 구분된다.   
+이 중, 다룰 것은 Core Container 이다. 이름 그대로 Spring Framework의 가장 핵심적인 철학이 담긴 계층이다.
+
+## Core Container
+Spring의 핵심은 IoC/DI이므로, 가장 기본이 되는 Core Container를 직접 만들어보면서 그 동작 원리를 이해하려고 했다.
+그 전에 기본적인 개념만 정리하고 가겠다.
+
+### IoC 컨테이너와 Bean
+Spring에서 IoC 컨테이너의 핵심 인터페이스는 두 가지다.
+![Spring Frameowrk Core Class Diagram](/images/spring-framework-core-class-diagram.png)
+* BeanFactory: 가장 기본적인 기능만 제공하는 컨테이너
+* ApplicationContext: BeanFactory를 확장한 기능(이벤트, 국제화, AOP 등)을 지원하는 컨테이너   
+
+즉, ApplicationContext는 BeanFactory의 자식 인터페이스이고, BeanFactory가 할 수 있는 일은 모두 ApplicationContext로 가능하기 때문에 현재는 사실상 ApplicationContext만 사용한다.   
+ApplicationContext는 Spring IoC 컨테이너를 나타내며, bean의 인스턴스화, 구성 및 bean의 조립의 역할을 한다. 이 때, 구성 메타데이터를 읽는 방식은 XML, Java Annotaiton, Java Code 등 다양하게 제공하는데 현재는 거의 Annotation 방식을 쓴다.
+
+### 구현해보자
+여기서 구현한 흐름은 크게 아래 Step으로 나눴다.
+- [x] Step 1: Config 기반 IoC 컨테이너 (@Configuration + @Bean)
+- [x] Step 2: @Autowired 지원 (자동 의존성 주입)
+- [ ] Step 3: BeanDefinition 도입
+- [ ] Step 3: Bean 라이프사이클 콜백 (@PostConstruct, @PreDestroy)
+- [ ] Step 4: Component 스캔 (@ComponentScan)
+- [ ] Step 5: Bean 스코프 (singleton, prototype 등)
+
+### Step 1: Config 기반 IoC 컨테이너 (@Configuration + @Bean)
+첫 스텝으로는 자바 설정 클래스(@Configuration)과 @Bean 메서드를 이용해 빈을 등록하는 방식을 구현해봤다. (아주 단순하게..)   
+(참고: https://docs.spring.io/spring-framework/reference/core/beans/java/basic-concepts.html)
+![Spring FrameworkS Sequence Diagram](/images/spring-framework-core-sequence-diagram.png)
+개발자는 @Configuration 어노테이션을 붙인 설정 클래스에 @Bean 메서드를 정의한다. 이 메서드들이 스프링 컨테이너가 관리할 객체의 정의가 된다.   
+이후 ApplicationContext를 띄울 때 ConfigClass를 넘겨주면, 내부적으로는 ConfigurationProcessor가 실행되어 설정 클래스를 스캔하게 된다.   
+실제로 객체를 사용할 때는 getBean() 메서드를 호출해서 반환받고 이 후 실행하게 된다.
+
+#### 1. ApplicationContext
+```java
+public class ApplicationContext implements BeanFactory {
+
+    private final DefaultBeanFactory beanFactory = new DefaultBeanFactory();
+    private final ConfigurationProcessor processor;
+
+    public ApplicationContext(Class<?>... configClasses) {
+        processor = new ConfigurationProcessor(beanFactory);
+        for (Class<?> configClass : configClasses) {
+            processor.process(configClass);
+        }
+    }
+
+    @Override
+    public <T> T getBean(Class<T> beanClass) {
+        return beanFactory.getBean(beanClass);
+    }
+}
+```
+- 외부에서 BeanFactory를 직접 쓰지 않고, `ApplicationContext`를 통해 Bean을 등록/조회
+- 내부적으로 ConfigurationProcessor를 실행하여 BeanFactory에 Bean들을 등록한 뒤, getBean()으로 조회 가능하게 만듦
+
+#### 2. ConfigurationProcessor
+```java
+public class ConfigurationProcessor {
+
+    private final DefaultBeanFactory factory;
+
+    public ConfigurationProcessor(DefaultBeanFactory factory) {
+        this.factory = factory;
+    }
+
+    public void process(Class<?> configClass) {
+        try {
+            Object configInstance = configClass.getDeclaredConstructor().newInstance();
+            for (Method method : configClass.getMethods()) {
+                if (method.isAnnotationPresent(Bean.class)) {
+                    Object bean = method.invoke(configInstance);
+
+                    @SuppressWarnings("unchecked")
+                    Class<Object> returnType = (Class<Object>) method.getReturnType();
+                    factory.registerBean(returnType, bean);
+                }
+            }
+        } catch (Exception exception) {
+            throw new RuntimeException("설정 클래스 처리 실패: " + configClass, exception);
+        }
+    }
+}
+```
+- process() 메서드는 먼저 설정 클래스 자체를 인스턴스화하고 리플렉션으로 @Bean 어노테이션이 붙은 메서드를 찾으면 invoke() 호출을 통해 객체를 생성함
+- 생성된 객체는 반환 타입을 키로 DefaultBeanFactory에 등록
+
+#### 3. DefaultBeanFactory
+```java
+public class DefaultBeanFactory implements BeanFactory {
+
+    private final Map<Class<?>, Object> singletons = new HashMap<>();
+
+    public <T> void registerBean(Class<?> type, Object instance) {
+        singletons.put(type, instance);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T> T getBean(Class<T> beanClass) {
+        Object bean = singletons.get(beanClass);
+        if (bean == null) {
+            return null;
+        }
+        return (T) bean;
+    }
+}
+```
+- 내부에 `Map<Class<?>, Object>`를 두고, 타입을 키로 하여 객체를 관리하도록 구현
+- 이후 확장) 
+   - 현재는 같은 타입의 Bean을 등록못함. 빈 이름을 키로 사용하도록 수정 필요
+   - BeanDefinition 추가하여 정의와 생성이 분리해야 함
+   - 지금은 단순히 객체 생성하고 @Autowired 주입만 함.라이프사이클 관리 부족 -> @PostConstruct, @PreDestroy 등
+
+### Step 2: @Autowired 지원 (자동 의존성 주입)
+Step 1에서는 의존성 주입을 직접 해줘야 했다.   
+예를 들어, Service는 Repository를 필드로 가지기 때문에 설정 클래스에서 명시적으로 생성자나 메서드에 넣어줘야 했다.
+```java
+// before
+@Bean
+public SoddongService soddongService() {
+    return new SoddongService(soddongRepository()); // 직접 연결
+}
+```
+하지만 Step 2에서는 BeanFactory가 @Autowired를 보고 자동으로 연결해 준다.   
+
+```java
+// after
+@Bean
+public SoddongService soddongService() {
+    return new SoddongService(); // 의존성은 컨테이너가 채워줌
+}
+```
+#### 1. @Autowired 어노테이션 정의
+먼저, 스프링의 @Autowired와 동일한 역할을 하는 간단한 커스텀 어노테이션을 만든다.
+```java
+@Target(ElementType.FIELD)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Autowired {
+}
+```
+
+#### 2. DefaultBeanFactory 확장
+
+DefaultBeanFactory에 performInjection() 메서드를 추가했다.   
+이제 Bean을 등록할 때 자동으로 의존성 주입을 수행한다.
+```java
+private void performInjection(Object bean) {
+    for (Field field : bean.getClass().getDeclaredFields()) {
+        if (field.isAnnotationPresent(Autowired.class)) {
+            Object dependency = getBean(field.getType());
+            if (dependency == null) {
+                throw new IllegalStateException("주입할 빈을 찾을 수 없음: " + field.getType());
+            }
+            try {
+                field.setAccessible(true);
+                field.set(bean, dependency);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException("의존성 주입 실패: " + field, e);
+            }
+        }
+    }
+}
+```
+
+#### 결과   
+![Spring Framework Core Step1, 2 Result](/images/spring-framework-core-step1-step2-result.png)
+로그를 보면, Repository 먼저 Bean 등록 후 Service Bean 등록하고 필드 주입을 해주는 것을 확인 할 수 있다.    
+하지만 만약 Service가 먼저 등록되면, Repository는 아직 BeanFactory에 없으므로 필드 주입 시 에러가 발생한다.   
+즉, 현재 구조에서는 등록 순서에 따라 의존성 주입 성공/실패가 갈린다. (순서는 랜덤이다)   
+초창기 Spring에는 이런 문제를 해결하기 위해 @DependsOn 어노테이션을 제공했다. 특정 Bean이 다른 Bean보다 먼저 초기화되도록 순서를 강제하는 방식이었다.   
+하지만 현재 스프링은 BeanDefinition과 빈 생명주기 관리를 통해 정의와 생성 시점을 분리하고 자동으로 의존 관계를 순서에 맞춰 주입하기 때문에 개발자가 직접 순서를 지정할 필요가 없다.   
+이 내용은 Step 3에서 다루겠다..
