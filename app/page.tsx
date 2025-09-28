@@ -12,7 +12,7 @@ export default async function Home() {
       {/* Hero Section */}
       <section className="text-center py-12">
         <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-gray-100 mb-6">
-         DEV BLOG
+         SODDONG BLOG
         </h1>
         <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto mb-8">
           호적상 3년차, 실력상 1년차 백엔드 개발자 일지
@@ -22,7 +22,7 @@ export default async function Home() {
             href="/posts"
             className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
           >
-            Read Latest Posts
+            Read All Posts
           </Link>
           <Link
             href="/about"
