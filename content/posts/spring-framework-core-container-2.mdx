@@ -1,7 +1,7 @@
 ---
 title: "Spring Core 동작 이해하기 (2)"
-description: "스프링 프레임워크 Core(IoC/DI)를 구현해보면서 이해한 과정을 단계별로 정리한 것"
-date: "2025-09-27"
+description: "BeanDefinition과 Scope"
+date: "2025-10-04"
 tags: ["Spring"]
 author: "Soddong"
 draft: false
@@ -35,14 +35,25 @@ featured: true
 | 6  | 초기화 | 초기화 콜백, `@PostConstruct`, 초기화 메서드(`initMethodName`) 호출 |
 | 7  | Bean 사용 | 애플리케이션에서 빈 인스턴스 사용 |
 
+### Bean Scope
+Spring 컨테이너에서는 빈의 스코프를 정할 수 있는데, 빈이 언제 생성되며 얼마나 유지할지 어떤범위로 공유할지를 결정한다.
+
+* singleton   
+기본 스코프로, 스프링 컨테이너 내에서 하나의 인스턴스만 존재하며 동일한 이름의 빈을 호출시 같은 인스턴스를 반환한다.
+
+* prototype  
+빈 요청시마다 매번 새로운 인스턴스를 생성하고 반환한다. 이때, 스프링은 컨테이너는 전체 lifecycle을 책임지지 않으며, 사용자가 소멸 콜백을 직접 호출해야한다.   
+
+* 이외 web관련 scope.  
+request, session, application, websocket는 web application에서만 의미있는 scope이다. 이건 추후 다루겠다!
+
 ### 구현해보자
 여기서 구현한 흐름은 크게 아래 Step으로 나눴다.
 - [x] Step 1: Config 기반 IoC 컨테이너 (@Configuration + @Bean)
 - [x] Step 2: @Autowired 지원 (자동 의존성 주입)
 - [x] Step 3: BeanDefinition 도입
-- [ ] Step 4: Bean 라이프사이클 콜백 (@PostConstruct, @PreDestroy)
+- [x] Step 4: Bean 스코프 (singleton, prototype)
 - [ ] Step 5: Component 스캔 (@ComponentScan)
-- [ ] Step 6: Bean 스코프 (singleton, prototype 등)
 
 ### Step 3: BeanDefinition 도입
 step2 까지 했을때, 생성과 동시에 bean 인스턴스를 등록해서 의존관계가 있을때 문제가 생겼었다.   
@@ -51,17 +62,67 @@ step2 까지 했을때, 생성과 동시에 bean 인스턴스를 등록해서 �
 * 실제 객체는 getBean() 호출 시 생성
 * 만약 의존관계가 있는 bean의 instance가 없을시 BeanDefinition을 뒤져서 생성
 
-좀 더 상세하게 설명하자면 아래와 같다.
 #### BeanDefinition 등록
-1. `ApplicationContext` 생성 시 `ConfigurationProcessor`가 설정 클래스의 `@Bean` 메서드를 스캔
-2. 각 `@Bean` 메서드마다 `AnnotatedGenericBeanDefinition`을 생성 (반환 타입을 기준으로 `beanClass`에 기록)
-3. `beanDefinition`에 `@Lazy`, `@Scope` 같은 메타데이터가 있으면 설정
-4. `DefaultBeanFactory.registerBeanDefinition(beanName, beanDefinition)`으로 등록
+1 `ApplicationContext` 생성 시 `ConfigurationProcessor`가 설정 클래스의 `@Bean` 메서드를 스캔.  
+2 각 `@Bean` 메서드마다 `AnnotatedGenericBeanDefinition`을 생성 (반환 타입을 기준으로 `beanClass`에 기록).  
+3 `beanDefinition`에 `@Lazy`, `@Scope` 같은 메타데이터가 있으면 설정.  
+4 `DefaultBeanFactory.registerBeanDefinition(beanName, beanDefinition)`으로 등록.  
 
 #### 조회 및 인스턴스화
-1. 사용자가 `getBean(beanName, beanClass)`를 호출
-2. `DefaultBeanFactory`는 먼저 `singletonMap`에서 인스턴스를 조회
-3. 인스턴스가 없으면 `definitionMap`에서 `BeanDefinition`을 검색
-4. `createBeanInstance(beanDefinition)`로 실제 객체를 생성
-5. 생성된 인스턴스를 `singletonMap`에 저장
-6. `performInjection(beanInstance)`를 호출해 `@Autowired` 필드들을 채움
+1 사용자가 `getBean(beanName, beanClass)`를 호출.  
+2 `DefaultBeanFactory`는 먼저 `singletonMap`에서 인스턴스를 조회.  
+3 인스턴스가 없으면 `definitionMap`에서 `BeanDefinition`을 검색.  
+4 `createBeanInstance(beanDefinition)`로 실제 객체를 생성.  
+5 생성된 인스턴스를 `singletonMap`에 저장.  
+6 `performInjection(beanInstance)`를 호출해 `@Autowired` 필드들을 채움.  
+
+### Step 4: Bean 스코프 (singleton, prototype)
+지금까지는 모든 빈이 싱글톤이라고 가정하고, 항상 singletonMap에서 꺼내오는 방식으로 동작했다.   
+즉, 한 번 생성된 인스턴스를 계속 재사용하는 구조였다.   
+하지만 이번에는 @Scope 어노테이션을 통해 스코프를 지정할 수 있도록 개선했다.   
+동작과정은 아래와 같다.   
+1 `ConfigurationProcessor`가 `@Bean` 메서드를 스캔할 때, 만약 해당 메서드에 `@Scope`가 붙어 있다면 그 값을 읽어 `BeanDefinition`의 `scope` 필드에 set한다.     
+2 이후 `getBean()` 호출 시, 등록된 `BeanDefinition`의 스코프 정보를 확인한다.   
+3-1 singleton인 경우, 기존과 동일하게 `singletonMap`에서 인스턴스를 찾아 반환한다. 없으면 새로 생성해서 등록한 뒤, 그 객체를 반환한다.     
+3-2 prototype인 경우, 매번 새로운 인스턴스를 생성해서 반환한다. 이때는 `singletonMap`에 저장하지 않는다.    
+
+이렇게 하면, prototype 스코프를 가진 빈은 요청할 때마다 항상 새로 생성되며, singleton은 한 번만 만들어져 애플리케이션 전역에서 공유된다.
+
+### 결과
+```java
+@Configuration
+public class AppConfig {
+    @Bean
+    public SoddongService soddongService() {
+        return new SoddongService();
+    }
+
+    @Bean
+    @Scope("prototype")
+    public SoddongRepository soddongRepository() {
+        return new SoddongRepository();
+    }
+}
+```
+위와 같이 SoddongService는 singleton,  SoddongRepository는 prototype으로 등록   
+
+```
+public static void main(String[] args) {
+    ApplicationContext applicationContext = new ApplicationContext(AppConfig.class);
+    SoddongService service1 = applicationContext.getBean(SoddongService.class.getSimpleName(), SoddongService.class);
+    SoddongService service2 = applicationContext.getBean(SoddongService.class.getSimpleName(), SoddongService.class);
+
+    SoddongRepository repository1 = applicationContext.getBean(SoddongRepository.class.getSimpleName(), SoddongRepository.class);
+    SoddongRepository repository2 = applicationContext.getBean(SoddongRepository.class.getSimpleName(), SoddongRepository.class);
+
+    log.info("(scope: singleton) service 동일한 인스턴스 여부 : {}", service1 == service2);
+    log.info("(scope: prototype) repository 동일한 인스턴스 여부 : {}", repository1 == repository2);
+}
+```
+service, repository 각각 bean을 두개씩 반환하여 동일한 인스턴스인지 비교 하였다.
+
+```bash
+21:53:57.102 [main] INFO com.soddong.stdy.use.Main -- (scope: singleton) service 동일한 인스턴스 여부 : true
+21:53:57.102 [main] INFO com.soddong.stdy.use.Main -- (scope: prototype) repository 동일한 인스턴스 여부 : false```
+```
+service는 동일한 인스턴스이고, repository는 서로다른 인스턴스임을 확인할 수 있다.
