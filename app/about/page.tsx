@@ -13,7 +13,7 @@ export default function About() {
           About Me
         </h1>
         <p className="text-xl text-gray-600 dark:text-gray-400">
-        나는 바보다, 고로 공부한다.
+        
         </p>
       </div>
 
